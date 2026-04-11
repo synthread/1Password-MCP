@@ -22,6 +22,8 @@ describe("config", () => {
     delete process.env.OP_INTEGRATION_NAME;
     delete process.env.OP_INTEGRATION_VERSION;
     delete process.env.OP_SERVICE_ACCOUNT_TOKEN;
+    delete process.env.OP_CONNECT_HOST;
+    delete process.env.OP_CONNECT_TOKEN;
   });
 
   afterEach(() => {
@@ -73,9 +75,11 @@ describe("config", () => {
     expect(config.logLevel).toBe("debug");
   });
 
-  it("reports tokenSource as missing when no token provided", () => {
+  it("reports authMode as missing when no credentials provided", () => {
     process.argv = ["node", "index.js"];
     const config = getConfig();
+    expect(config.authMode).toBe("missing");
+    expect(config.authSource).toBe("missing");
     expect(config.tokenSource).toBe("missing");
     expect(config.serviceAccountToken).toBeUndefined();
   });
@@ -83,6 +87,7 @@ describe("config", () => {
   it("reads token from --service-account-token arg", () => {
     process.argv = ["node", "index.js", "--service-account-token", "test-token"];
     const config = getConfig();
+    expect(config.authMode).toBe("service-account");
     expect(config.tokenSource).toBe("args");
     expect(config.serviceAccountToken).toBe("test-token");
   });
@@ -91,6 +96,7 @@ describe("config", () => {
     process.argv = ["node", "index.js"];
     process.env.OP_SERVICE_ACCOUNT_TOKEN = "env-token";
     const config = getConfig();
+    expect(config.authMode).toBe("service-account");
     expect(config.tokenSource).toBe("env");
     expect(config.serviceAccountToken).toBe("env-token");
   });
@@ -99,8 +105,52 @@ describe("config", () => {
     process.argv = ["node", "index.js", "--token", "arg-token"];
     process.env.OP_SERVICE_ACCOUNT_TOKEN = "env-token";
     const config = getConfig();
+    expect(config.authMode).toBe("service-account");
     expect(config.tokenSource).toBe("args");
     expect(config.serviceAccountToken).toBe("arg-token");
+  });
+
+  it("reads connect credentials from env vars", () => {
+    process.argv = ["node", "index.js"];
+    process.env.OP_CONNECT_HOST = "https://connect.example.com";
+    process.env.OP_CONNECT_TOKEN = "connect-token";
+    const config = getConfig();
+    expect(config.authMode).toBe("connect");
+    expect(config.authSource).toBe("env");
+    expect(config.connectHost).toBe("https://connect.example.com");
+    expect(config.connectToken).toBe("connect-token");
+  });
+
+  it("reads connect credentials from args", () => {
+    process.argv = [
+      "node",
+      "index.js",
+      "--connect-host",
+      "https://connect.example.com",
+      "--connect-token",
+      "connect-token",
+    ];
+    const config = getConfig();
+    expect(config.authMode).toBe("connect");
+    expect(config.authSource).toBe("args");
+    expect(config.connectHost).toBe("https://connect.example.com");
+    expect(config.connectToken).toBe("connect-token");
+  });
+
+  it("prefers connect over service account credentials", () => {
+    process.argv = ["node", "index.js"];
+    process.env.OP_SERVICE_ACCOUNT_TOKEN = "env-token";
+    process.env.OP_CONNECT_HOST = "https://connect.example.com";
+    process.env.OP_CONNECT_TOKEN = "connect-token";
+    const config = getConfig();
+    expect(config.authMode).toBe("connect");
+    expect(config.tokenSource).toBe("env");
+  });
+
+  it("errors on partial connect configuration", () => {
+    process.argv = ["node", "index.js"];
+    process.env.OP_CONNECT_HOST = "https://connect.example.com";
+    expect(() => getConfig()).toThrow(/Partial Connect configuration/);
   });
 
   it("uses default integration name/version", () => {

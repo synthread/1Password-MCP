@@ -3,7 +3,7 @@
   "version": "2.4.1",
   "private": false,
   "type": "module",
-  "description": "MCP server for 1Password service accounts — tools, prompts, and resources for vault and credential management",
+  "description": "MCP server for 1Password credentials — tools, prompts, and resources for vault and credential management",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -21,7 +21,8 @@
     "password-manager",
     "secrets",
     "vault",
-    "service-account"
+    "service-account",
+    "connect"
   ],
   "engines": {
     "node": ">=18"
@@ -50,6 +51,7 @@
     "CHANGELOG.md"
   ],
   "dependencies": {
+    "@1password/connect": "^1.4.2",
     "@1password/sdk": "^0.3.1",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "zod": "^3.23.8"

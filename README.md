@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![MCP Badge](https://lobehub.com/badge/mcp/cakerepository-1password-mcp)](https://lobehub.com/mcp/cakerepository-1password-mcp)
 
-A community-built [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that connects MCP-compatible AI clients (Claude Desktop, VS Code Copilot, OpenAI Codex, Gemini, etc.) to **1Password** vaults via a [Service Account](https://developer.1password.com/docs/service-accounts/).
+A community-built [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that connects MCP-compatible AI clients (Claude Desktop, VS Code Copilot, OpenAI Codex, Gemini, etc.) to **1Password** vaults via either a [Service Account](https://developer.1password.com/docs/service-accounts/) or [1Password Connect](https://developer.1password.com/docs/connect/).
 
 > **Not an official 1Password product.** This is a community project.
 
@@ -50,7 +50,7 @@ A community-built [Model Context Protocol (MCP)](https://modelcontextprotocol.io
 ### Prerequisites
 
 - **Node.js** >= 18
-- A [1Password Service Account token](https://developer.1password.com/docs/service-accounts/)
+- Either a [1Password Service Account token](https://developer.1password.com/docs/service-accounts/) or a [1Password Connect](https://developer.1password.com/docs/connect/) host/token pair
 
 ### Claude Desktop / VS Code / IDEs (JSON)
 
@@ -62,6 +62,23 @@ A community-built [Model Context Protocol (MCP)](https://modelcontextprotocol.io
       "args": ["-y", "@takescake/1password-mcp"],
       "env": {
         "OP_SERVICE_ACCOUNT_TOKEN": "YOUR_SERVICE_ACCOUNT_TOKEN"
+      }
+    }
+  }
+}
+```
+
+### Claude Desktop / VS Code / IDEs (JSON, Connect)
+
+```json
+{
+  "mcpServers": {
+    "1password": {
+      "command": "npx",
+      "args": ["-y", "@takescake/1password-mcp"],
+      "env": {
+        "OP_CONNECT_HOST": "https://connect.example.com",
+        "OP_CONNECT_TOKEN": "YOUR_CONNECT_TOKEN"
       }
     }
   }
@@ -92,12 +109,26 @@ env_vars = ["OP_SERVICE_ACCOUNT_TOKEN"]
 
 Then set `OP_SERVICE_ACCOUNT_TOKEN` in your shell/session/CI environment.
 
+**Connect**:
+
+```toml
+[mcp_servers."1password"]
+command = "npx"
+args = ["-y", "@takescake/1password-mcp"]
+
+[mcp_servers."1password".env]
+OP_CONNECT_HOST = "https://connect.example.com"
+OP_CONNECT_TOKEN = "YOUR_CONNECT_TOKEN"
+```
+
 > **Note:** `codex mcp add ... --env OP_SERVICE_ACCOUNT_TOKEN=...` writes the token into Codex config. Use `env_vars` if you want the config to reference only the variable name.
 
 ### CLI Options
 
 ```
 --service-account-token <token>   1Password service account token
+--connect-host <url>             1Password Connect server URL
+--connect-token <token>          1Password Connect access token
 --log-level <level>               Log level: error, warn, info, debug (default: info)
 --integration-name <name>         Custom integration name for 1Password SDK
 --integration-version <version>   Custom integration version
@@ -113,10 +144,10 @@ Then set `OP_SERVICE_ACCOUNT_TOKEN` in your shell/session/CI environment.
 - **No E2E encryption in MCP** -- Secrets are plaintext inside the MCP workflow and in transit to the model. They are encrypted only once stored in 1Password.
 - **Intended use** -- Best for automated/disposable credentials (dev DB creds, bot/service accounts, CI tokens).
 - **Avoid high-stakes secrets** -- Do not use for banking, primary personal accounts, or other sensitive credentials. Use dedicated automation vaults.
-- **Token security** -- Treat the Service Account Token like a master key. Rotate immediately if exposed.
+- **Token security** -- Treat service account and Connect tokens like master keys. Rotate immediately if exposed.
 - **Config files** -- Keep MCP config files out of version control (add to `.gitignore`).
 - **Secret references** -- Prefer `op://...` references over copying raw passwords into prompts or files.
-- **Least privilege** -- Use dedicated vaults and limited-scope service accounts for automation workflows.
+- **Least privilege** -- Use dedicated vaults and limited-scope service accounts or Connect credentials for automation workflows.
 
 ---
 

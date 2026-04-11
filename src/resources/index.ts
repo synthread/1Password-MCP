@@ -33,6 +33,9 @@ export function registerAllResources(server: McpServer): void {
                 logLevel: config.logLevel,
                 integrationName: config.integrationName,
                 integrationVersion: config.integrationVersion,
+                authMode: config.authMode,
+                authSource: config.authSource,
+                connectHostConfigured: Boolean(config.connectHost),
                 tokenSource: config.tokenSource,
                 nodeVersion: process.version,
               },
@@ -50,11 +53,11 @@ export function registerAllResources(server: McpServer): void {
   server.resource(
     "vault-list",
     "1password://vaults",
-    {
-      description:
-        "List of all 1Password vaults accessible to the service account.",
-      mimeType: "application/json",
-    },
+      {
+        description:
+          "List of all 1Password vaults accessible to the configured 1Password credentials.",
+        mimeType: "application/json",
+      },
     async () => {
       try {
         const client = await getClient();
@@ -101,11 +104,11 @@ export function registerAllResources(server: McpServer): void {
   server.resource(
     "vault-items",
     "1password://vaults/{vaultId}/items",
-    {
-      description:
-        "List of items within a specific 1Password vault (metadata only, no secrets).",
-      mimeType: "application/json",
-    },
+      {
+        description:
+          "List of items within a specific 1Password vault (metadata only, no secrets).",
+        mimeType: "application/json",
+      },
     async (uri) => {
       try {
         // Extract vaultId from the URI

@@ -47,7 +47,8 @@ async function main(): Promise<void> {
     integrationName: config.integrationName,
     integrationVersion: config.integrationVersion,
     node: process.version,
-    tokenSource: config.tokenSource,
+    authMode: config.authMode,
+    authSource: config.authSource,
   });
 
   const transport = new StdioServerTransport();

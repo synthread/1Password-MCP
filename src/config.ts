@@ -28,10 +28,18 @@ export interface ServerConfig {
   integrationName: string;
   /** Integration version reported to 1Password SDK. */
   integrationVersion: string;
+  /** Selected authentication mode. */
+  authMode: "service-account" | "connect" | "missing";
+  /** Non-secret auth source indicator. */
+  authSource: "args" | "env" | "mixed" | "missing";
   /** Service account token (may be undefined until first use). */
   serviceAccountToken: string | undefined;
-  /** Where the token came from. */
-  tokenSource: "args" | "env" | "missing";
+  /** Connect host (may be undefined when not configured). */
+  connectHost: string | undefined;
+  /** Connect token (may be undefined when not configured). */
+  connectToken: string | undefined;
+  /** Where the active credentials came from. */
+  tokenSource: "args" | "env" | "mixed" | "missing";
 }
 
 let _config: ServerConfig | undefined;
@@ -58,24 +66,75 @@ export function getConfig(): ServerConfig {
     process.env.OP_INTEGRATION_VERSION ??
     SERVER_VERSION;
 
+  const connectHostFromArgs = getArgValue("connect-host");
+  const connectTokenFromArgs =
+    getArgValue("connect-token") ?? getArgValue("connect-auth-token");
+  const connectHost = connectHostFromArgs ?? process.env.OP_CONNECT_HOST;
+  const connectToken = connectTokenFromArgs ?? process.env.OP_CONNECT_TOKEN;
+
   const tokenFromArgs =
     getArgValue("service-account-token") ?? getArgValue("token");
 
   const serviceAccountToken =
     tokenFromArgs ?? process.env.OP_SERVICE_ACCOUNT_TOKEN;
 
-  const tokenSource: ServerConfig["tokenSource"] = tokenFromArgs
+  const hasConnectHost = typeof connectHost === "string";
+  const hasConnectToken = typeof connectToken === "string";
+  const hasServiceAccountToken = typeof serviceAccountToken === "string";
+
+  if (hasConnectHost !== hasConnectToken) {
+    throw new Error(
+      "Partial Connect configuration detected. Provide both OP_CONNECT_HOST and OP_CONNECT_TOKEN, or use OP_SERVICE_ACCOUNT_TOKEN.",
+    );
+  }
+
+  const connectHostSource = connectHostFromArgs
+    ? "args"
+    : process.env.OP_CONNECT_HOST
+      ? "env"
+      : "missing";
+  const connectTokenSource = connectTokenFromArgs
+    ? "args"
+    : process.env.OP_CONNECT_TOKEN
+      ? "env"
+      : "missing";
+  const serviceAccountTokenSource = tokenFromArgs
     ? "args"
     : process.env.OP_SERVICE_ACCOUNT_TOKEN
       ? "env"
       : "missing";
+
+  const authMode: ServerConfig["authMode"] = hasConnectHost
+    ? "connect"
+    : hasServiceAccountToken
+      ? "service-account"
+      : "missing";
+
+  const authSource: ServerConfig["authSource"] = hasConnectHost
+    ? connectHostSource === connectTokenSource
+      ? connectHostSource
+      : "mixed"
+    : hasServiceAccountToken
+      ? serviceAccountTokenSource
+      : "missing";
+
+  const tokenSource: ServerConfig["tokenSource"] =
+    authSource === "args" || authSource === "env"
+      ? authSource
+      : authSource === "mixed"
+        ? "mixed"
+        : "missing";
 
   _config = {
     logLevel: logLevelRaw,
     logLevelValue,
     integrationName,
     integrationVersion,
+    authMode,
+    authSource,
     serviceAccountToken,
+    connectHost,
+    connectToken,
     tokenSource,
   };
 

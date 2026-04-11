@@ -11,7 +11,7 @@ import type { VaultSummary } from "../types.js";
 export function registerVaultList(server: McpServer): void {
   server.tool(
     "vault_list",
-    "List all 1Password vaults accessible to the service account. Returns vault IDs, names, descriptions, and types.",
+    "List all 1Password vaults accessible to the configured 1Password credentials. Returns vault IDs, names, descriptions, and types.",
     {},
     async () => {
       try {
