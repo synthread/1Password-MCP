@@ -1,0 +1,61 @@
+image: node:22
+
+stages:
+  - lint
+  - build
+  - publish
+
+variables:
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+
+cache:
+  key:
+    files:
+      - package-lock.json
+  paths:
+    - .npm/
+
+default:
+  before_script:
+    - npm ci
+
+lint:
+  stage: lint
+  script:
+    - npm run lint
+    - npm audit --audit-level=high
+
+build:
+  stage: build
+  script:
+    - npm run build
+    - npm test
+
+get-npm-token:
+  stage: publish
+  image: 1password/op:2
+  needs:
+    - lint
+    - build
+  rules:
+    - if: "$CI_COMMIT_TAG"
+  script:
+    - printf "NPM_TOKEN=%s\n" "$(op item get "npm-registry-token" --vault "Kubernetes" --fields label=NPM_TOKEN)" > publish.env
+  artifacts:
+    reports:
+      dotenv: publish.env
+
+publish:
+  stage: publish
+  image: node:22
+  needs:
+    - get-npm-token
+  rules:
+    - if: "$CI_COMMIT_TAG"
+  script:
+    - NPM_PACKAGE_SCOPE="@${NPM_ORGANIZATION}"
+    - NPM_PACKAGE_NAME="${NPM_PACKAGE_SCOPE}/1password-mcp"
+    - test -n "$NPM_ORGANIZATION"
+    - npm pkg set name="$NPM_PACKAGE_NAME"
+    - printf "//registry.npmjs.org/:_authToken=%s\n" "$NPM_TOKEN" > .npmrc
+    - npm publish --access public
