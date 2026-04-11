@@ -2,7 +2,7 @@ include:
   - project: synthread/ci
     file: /op-connect.yml
 
-image: node:22
+image: node:22@sha256:ecabd1cb6956d7acfffe8af6bbfbe2df42362269fd28c227f36367213d0bb777
 
 stages:
   - lint
@@ -48,7 +48,7 @@ get-npm-token:
 
 publish:
   stage: publish
-  image: node:22
+  image: node:22@sha256:ecabd1cb6956d7acfffe8af6bbfbe2df42362269fd28c227f36367213d0bb777
   needs:
     - get-npm-token
   rules:
