@@ -39,6 +39,7 @@ get-npm-token:
     - build
   rules:
     - if: "$CI_COMMIT_TAG"
+  before_script: []
   script:
     - printf "NPM_TOKEN=%s\n" "$(op item get "npm-registry-token" --vault "Kubernetes" --fields label=NPM_TOKEN)" > publish.env
   artifacts:
