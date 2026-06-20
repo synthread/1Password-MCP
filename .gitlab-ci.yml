@@ -8,7 +8,7 @@ include:
           item: npm-registry-token
           field: credential
 
-image: node:24@sha256:8530f76a96d88820d288761f022e318970dda93d01536919fbc16076b7983e63
+image: node:24@sha256:032e78d7e54e352129831743737e3a83171d9cc5b5896f411649c597ce0b11ea
 
 stages:
   - lint
@@ -48,7 +48,7 @@ secrets:
 
 publish:
   stage: publish
-  image: node:24@sha256:8530f76a96d88820d288761f022e318970dda93d01536919fbc16076b7983e63
+  image: node:24@sha256:032e78d7e54e352129831743737e3a83171d9cc5b5896f411649c597ce0b11ea
   needs:
     - secrets
   rules:
